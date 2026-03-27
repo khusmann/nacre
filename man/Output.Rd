@@ -16,6 +16,8 @@ Output(render_fn, output_fn, expr, ..., env = parent.frame(), quoted = FALSE)
 \item{...}{Additional arguments passed to \code{output_fn}.}
 
 \item{env}{The environment in which to evaluate \code{expr}.}
+
+\item{quoted}{If \code{TRUE}, \code{expr} is already a quoted expression.}
 }
 \value{
 A nacre output node.

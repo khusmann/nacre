@@ -117,6 +117,7 @@ Match <- function(...) {
 #' @param expr An expression passed to `render_fn`.
 #' @param ... Additional arguments passed to `output_fn`.
 #' @param env The environment in which to evaluate `expr`.
+#' @param quoted If `TRUE`, `expr` is already a quoted expression.
 #' @return A nacre output node.
 #' @export
 Output <- function(render_fn, output_fn, expr, ...,
