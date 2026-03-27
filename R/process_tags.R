@@ -1,22 +1,32 @@
-nacre_id_generator <- function() {
-  counter <- 0L
-  function() {
-    counter <<- counter + 1L
-    paste0("nacre-", counter)
-  }
+nacre_id_counter <- new.env(parent = emptyenv())
+nacre_id_counter$value <- 0L
+
+nacre_next_id <- function() {
+  nacre_id_counter$value <- nacre_id_counter$value + 1L
+  paste0("nacre-", nacre_id_counter$value)
 }
 
-process_tags <- function(tag, next_id) {
+process_tags <- function(tag) {
   bindings <- list()
   events <- list()
 
   walk <- function(node) {
+    if (is.null(node)) return(NULL)
+
     if (is.function(node)) {
-      id <- next_id()
+      id <- nacre_next_id()
       bindings[[length(bindings) + 1L]] <<- list(
         id = id, attr = "textContent", fn = node
       )
       return(tags$span(id = id))
+    }
+
+    if (is.list(node) && !inherits(node, "shiny.tag")) {
+      result <- lapply(node, walk)
+      if (inherits(node, "shiny.tag.list")) {
+        class(result) <- class(node)
+      }
+      return(result)
     }
 
     if (!inherits(node, "shiny.tag")) return(node)
@@ -48,7 +58,7 @@ process_tags <- function(tag, next_id) {
     }
 
     if (length(pending_bindings) > 0L || length(pending_events) > 0L) {
-      id <- if (!is.null(kept_attribs$id)) kept_attribs$id else next_id()
+      id <- if (!is.null(kept_attribs$id)) kept_attribs$id else nacre_next_id()
       kept_attribs$id <- id
 
       for (b in pending_bindings) {

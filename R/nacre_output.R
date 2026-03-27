@@ -12,8 +12,7 @@ renderNacre <- function(expr, env = parent.frame(), quoted = FALSE) {
     session <- getDefaultReactiveDomain()
     tag_tree <- isolate(func())
 
-    next_id <- nacre_id_generator()
-    result <- process_tags(tag_tree, next_id)
+    result <- process_tags(tag_tree)
 
     session$onFlushed(function() {
       # Set up event listeners
