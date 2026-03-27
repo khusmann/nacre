@@ -1,3 +1,4 @@
+#' @export
 shiny_output <- function(render_fn, output_fn, expr, ...,
                          env = parent.frame()) {
   id <- nacre_next_id()
@@ -12,6 +13,7 @@ shiny_output <- function(render_fn, output_fn, expr, ...,
   result
 }
 
+#' @export
 nacreApp <- function(fn, ...) {
   # Process the tag tree at build time so the app function's return value
   # (e.g. page_sidebar) becomes the actual document root, preserving proper
@@ -25,6 +27,7 @@ nacreApp <- function(fn, ...) {
   shinyApp(ui, server, ...)
 }
 
+#' @export
 nacreOutput <- function(id) {
   htmltools::attachDependencies(
     uiOutput(id),
@@ -32,6 +35,7 @@ nacreOutput <- function(id) {
   )
 }
 
+#' @export
 renderNacre <- function(expr, env = parent.frame(), quoted = FALSE) {
   func <- shiny::exprToFunction(expr, env, quoted)
 
