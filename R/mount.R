@@ -47,6 +47,11 @@ nacre_mount_processed <- function(result, session) {
     observers[[length(observers) + 1L]] <<- obs
   })
 
+  # Set up Shiny outputs
+  for (so in result$shiny_outputs) {
+    session$output[[so$id]] <- so$render_call
+  }
+
   # Set up control flow nodes
   cf_envs <- list()
 

@@ -14,9 +14,18 @@ process_tags <- function(tag) {
   bindings <- list()
   events <- list()
   control_flows <- list()
+  shiny_outputs <- list()
 
   walk <- function(node) {
     if (is.null(node)) return(NULL)
+
+    if (inherits(node, "shiny_output")) {
+      shiny_outputs[[length(shiny_outputs) + 1L]] <<- list(
+        id = node$id,
+        render_call = node$render_call
+      )
+      return(node$output_tag)
+    }
 
     if (inherits(node, "nacre_when")) {
       id <- nacre_next_id()
@@ -97,5 +106,5 @@ process_tags <- function(tag) {
 
   cleaned_tag <- walk(tag)
   list(tag = cleaned_tag, bindings = bindings, events = events,
-       control_flows = control_flows)
+       control_flows = control_flows, shiny_outputs = shiny_outputs)
 }
