@@ -28,7 +28,11 @@ nacre_mount_processed <- function(result, session) {
       list(
         id = ev$id,
         event = ev$event,
-        inputId = session$ns(input_id)
+        inputId = session$ns(input_id),
+        mode = ev$mode,
+        ms = ev$ms,
+        leading = ev$leading,
+        coalesce = ev$coalesce
       )
     })
     session$sendCustomMessage("nacre-events", event_msgs)

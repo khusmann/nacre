@@ -12,7 +12,7 @@ Counter <- function(count) {
       type = "range", min = 0, max = 100,
       class = "form-range",
       value = count,
-      onInput = \(value) count(as.numeric(value))
+      onInput = event_throttle(\(value) count(as.numeric(value)), 100)
     ),
     tags$button(
       class = "btn btn-outline-secondary btn-sm",

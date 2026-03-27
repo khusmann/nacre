@@ -1,5 +1,6 @@
 is_nacre_reactive <- function(x) {
-  is.function(x) && (identical(class(x), "function") || inherits(x, "reactive"))
+  is.function(x) && (identical(class(x), "function") || inherits(x, "reactive") ||
+    inherits(x, "nacre_rate_limited"))
 }
 
 nacre_id_counter <- new.env(parent = emptyenv())
@@ -92,9 +93,21 @@ process_tags <- function(tag) {
 
       if (is_event) {
         js_event <- tolower(sub("^on", "", name))
-        pending_events[[length(pending_events) + 1L]] <- list(
-          event = js_event, handler = val
-        )
+        is_rate_limited <- inherits(val, "nacre_rate_limited")
+        if (is_rate_limited) {
+          handler <- structure(val, class = "function",
+                               mode = NULL, ms = NULL, leading = NULL,
+                               coalesce = NULL)
+          pending_events[[length(pending_events) + 1L]] <- list(
+            event = js_event, handler = handler,
+            mode = attr(val, "mode"), ms = attr(val, "ms"),
+            leading = attr(val, "leading"), coalesce = attr(val, "coalesce")
+          )
+        } else {
+          pending_events[[length(pending_events) + 1L]] <- list(
+            event = js_event, handler = val
+          )
+        }
       } else {
         pending_bindings[[length(pending_bindings) + 1L]] <- list(
           attr = name, fn = val

@@ -13,7 +13,7 @@ OutputApp <- function() {
         type = "range", min = 1, max = 50,
         class = "form-range",
         value = bins,
-        onInput = \(value) bins(as.numeric(value))
+        onInput = event_throttle(\(value) bins(as.numeric(value)), 100)
       )
     ),
     shiny_output(renderPlot, plotOutput, {
