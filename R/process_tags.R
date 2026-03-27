@@ -1,3 +1,11 @@
+#' Test whether a value is a nacre-reactive function
+#'
+#' Returns `TRUE` for plain functions, Shiny reactives, and rate-limited
+#' handlers created by [event_throttle()] or [event_debounce()].
+#'
+#' @param x An object to test.
+#' @return Logical.
+#' @keywords internal
 is_nacre_reactive <- function(x) {
   is.function(x) && (identical(class(x), "function") || inherits(x, "reactive") ||
     inherits(x, "nacre_rate_limited"))
@@ -6,11 +14,28 @@ is_nacre_reactive <- function(x) {
 nacre_id_counter <- new.env(parent = emptyenv())
 nacre_id_counter$value <- 0L
 
+#' Generate a unique nacre element ID
+#'
+#' Returns an auto-incrementing ID of the form `"nacre-1"`, `"nacre-2"`, etc.
+#'
+#' @return A character string.
+#' @keywords internal
 nacre_next_id <- function() {
   nacre_id_counter$value <- nacre_id_counter$value + 1L
   paste0("nacre-", nacre_id_counter$value)
 }
 
+#' Walk a tag tree and extract reactive bindings
+#'
+#' Recursively walks an HTML tag tree, replacing reactive attributes and
+#' event handlers with plain IDs. Returns the cleaned tag along with lists
+#' of bindings, events, control-flow nodes, and Shiny outputs to be mounted
+#' by [nacre_mount_processed()].
+#'
+#' @param tag A Shiny tag, tag list, or nacre control-flow node.
+#' @return A list with elements `$tag`, `$bindings`, `$events`,
+#'   `$control_flows`, and `$shiny_outputs`.
+#' @keywords internal
 process_tags <- function(tag) {
   bindings <- list()
   events <- list()
@@ -141,6 +166,13 @@ process_tags <- function(tag) {
        control_flows = control_flows, shiny_outputs = shiny_outputs)
 }
 
+#' nacre JavaScript dependency
+#'
+#' Returns an [htmltools::htmlDependency()] for the client-side nacre
+#' runtime (`nacre.js`).
+#'
+#' @return An `html_dependency` object.
+#' @keywords internal
 nacre_dependency <- function() {
   htmltools::htmlDependency(
     name = "nacre",

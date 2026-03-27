@@ -1,15 +1,15 @@
 #' Throttle an event callback
 #'
-#' Fires at most every \code{ms} milliseconds while the event is active.
-#' With \code{coalesce = TRUE} (the default), also waits for the server to
+#' Fires at most every `ms` milliseconds while the event is active.
+#' With `coalesce = TRUE` (the default), also waits for the server to
 #' finish processing before sending the next event, so the effective rate is
-#' \code{max(ms, server_processing_time)}.
+#' `max(ms, server_processing_time)`.
 #'
 #' @param fn An event handler function.
 #' @param ms Minimum interval in milliseconds between events.
-#' @param leading If \code{TRUE} (default), fire immediately on the first
-#'   event. If \code{FALSE}, wait for the timer before firing.
-#' @param coalesce If \code{TRUE} (default), also gate on server idle so
+#' @param leading If `TRUE` (default), fire immediately on the first
+#'   event. If `FALSE`, wait for the timer before firing.
+#' @param coalesce If `TRUE` (default), also gate on server idle so
 #'   events never queue faster than the server can process them.
 #' @return A wrapped handler.
 #' @export
@@ -20,13 +20,13 @@ event_throttle <- function(fn, ms, leading = TRUE, coalesce = TRUE) {
 
 #' Debounce an event callback
 #'
-#' Waits until the user pauses for \code{ms} milliseconds before firing.
-#' With \code{coalesce = TRUE} (the default), also waits for the server to
+#' Waits until the user pauses for `ms` milliseconds before firing.
+#' With `coalesce = TRUE` (the default), also waits for the server to
 #' finish processing, so events never queue up.
 #'
 #' @param fn An event handler function.
 #' @param ms Quiet period in milliseconds before firing.
-#' @param coalesce If \code{TRUE} (default), also gate on server idle so
+#' @param coalesce If `TRUE` (default), also gate on server idle so
 #'   events never queue faster than the server can process them.
 #' @return A wrapped handler.
 #' @export

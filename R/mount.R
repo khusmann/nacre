@@ -1,8 +1,30 @@
+#' Process and mount a nacre tag tree
+#'
+#' Calls [process_tags()] on a raw tag tree, then mounts the result into the
+#' given Shiny session.
+#'
+#' @param tag_tree A nacre tag tree (typically the return value of a component
+#'   function).
+#' @param session A Shiny session object.
+#' @return A mount handle with a `$destroy()` method.
+#' @keywords internal
 nacre_mount <- function(tag_tree, session) {
   result <- process_tags(tag_tree)
   nacre_mount_processed(result, session)
 }
 
+#' Mount a pre-processed nacre tag tree
+#'
+#' Takes the output of [process_tags()] and wires up Shiny observers for
+#' reactive attribute bindings, event listeners, Shiny outputs, and
+#' control-flow nodes (`When`, `Each`, `Index`, `Match`).
+#'
+#' @param result A list returned by [process_tags()], containing `$tag`,
+#'   `$bindings`, `$events`, `$control_flows`, and `$shiny_outputs`.
+#' @param session A Shiny session object.
+#' @return A mount handle with `$tag` (the processed HTML) and `$destroy()`
+#'   (a function that tears down all observers).
+#' @keywords internal
 nacre_mount_processed <- function(result, session) {
   observers <- list()
 
