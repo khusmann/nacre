@@ -73,13 +73,24 @@ branch.
 
 **Match** — Same pattern, but iterates cases to find the first truthy condition.
 
-**Each** — Observes the items list. On any change: destroys the current mount,
-calls `fn(item_accessor, index)` for each item, processes the resulting tag
-list, swaps, and mounts. Currently recreates all items on every change.
+**Each** — Observes the items list. Diffs old vs new items by key (the `by`
+argument extracts a comparable identity from each item). Kept items have their
+DOM nodes reordered and their item accessor updated; new items are mounted;
+removed items are destroyed. Each item holds its own mount handle so it can be
+independently added, removed, or reordered. The callback contract is
+`fn(item, index)` where `item` is a stable accessor and `index` is a reactive
+value that updates when the item moves. Requires a `by` argument — R's
+copy-on-modify semantics make reference identity too fragile to use as a
+default. Needs a new client-side message (`nacre-reorder`) to insert, remove,
+and reorder individual child nodes by ID, since `nacre-swap` replaces innerHTML
+wholesale.
 
-**Index** — Observes the items list. If the length changes: full rebuild (same
-as Each). If the length is stable: updates each slot's `reactiveVal` in place,
-so existing observers fire with the new values without DOM recreation.
+**Index** — Observes the items list. Each slot holds its own mount handle. If
+the list grows, new slots are appended. If the list shrinks, trailing slots are
+destroyed. If the length is stable, each slot's `reactiveVal` is updated in
+place so existing observers fire with the new values without DOM recreation.
+The callback contract is `fn(item, index)` where `item` is a `reactiveVal`
+and `index` is a fixed integer.
 
 ## Client-Side Protocol
 
@@ -137,16 +148,25 @@ process them.
 Events are currently global so multiple sessions are tied together. Need to
 scope events to just the current session.
 
-### `Each` — keyed-by-identity rendering
+### `Each` — keyed reordering
 
-Currently destroys and recreates all items on any list change. Should reorder
-DOM nodes by item identity to preserve per-item state (focus, local reactives)
-across list mutations.
+Currently destroys and recreates all items on any list change. Needs:
+
+- `by` argument (required) — a function that extracts a comparable key from
+  each item.
+- Per-item mount handles instead of one mount for the whole list.
+- Diff old vs new keys to reorder, add, and remove individual items.
+- New `nacre-reorder` client-side message to insert, remove, and reorder child
+  nodes by ID (since `nacre-swap` replaces innerHTML wholesale).
 
 ### `Index` — incremental add/remove
 
-Currently does a full rebuild when list length changes. Should incrementally add
-or remove trailing slots so existing slots keep their observers.
+Currently does a full rebuild when list length changes. Needs:
+
+- Per-slot mount handles instead of one mount for the whole list.
+- When list grows: append new slots, leave existing ones untouched.
+- When list shrinks: destroy trailing slots.
+- Same-length updates already work (reactiveVal in-place update).
 
 ### `Portal`
 
