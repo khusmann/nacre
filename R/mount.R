@@ -35,7 +35,7 @@ nacre_mount_processed <- function(result, session) {
   }
 
   # Set up reactive attribute bindings
-  for (b in result$bindings) {
+  lapply(result$bindings, function(b) {
     obs <- observe({
       val <- b$fn()
       session$sendCustomMessage("nacre-attr", list(
@@ -44,8 +44,8 @@ nacre_mount_processed <- function(result, session) {
         value = val
       ))
     })
-    observers[[length(observers) + 1L]] <- obs
-  }
+    observers[[length(observers) + 1L]] <<- obs
+  })
 
   # Set up control flow nodes
   cf_envs <- list()

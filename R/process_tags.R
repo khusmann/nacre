@@ -1,3 +1,7 @@
+is_nacre_reactive <- function(x) {
+  is.function(x) && (identical(class(x), "function") || inherits(x, "reactive"))
+}
+
 nacre_id_counter <- new.env(parent = emptyenv())
 nacre_id_counter$value <- 0L
 
@@ -25,9 +29,7 @@ process_tags <- function(tag) {
       return(tags$div(id = id, style = "display:contents"))
     }
 
-    if (inherits(node, "html_dependency")) return(node)
-
-    if (is.function(node)) {
+    if (is.function(node) && is_nacre_reactive(node)) {
       id <- nacre_next_id()
       bindings[[length(bindings) + 1L]] <<- list(
         id = id, attr = "textContent", fn = node
@@ -35,7 +37,8 @@ process_tags <- function(tag) {
       return(tags$span(id = id))
     }
 
-    if (is.list(node) && !inherits(node, "shiny.tag")) {
+    if (is.list(node) && !inherits(node, "shiny.tag") &&
+        !inherits(node, "html_dependency")) {
       result <- lapply(node, walk)
       if (inherits(node, "shiny.tag.list")) {
         class(result) <- class(node)
@@ -52,7 +55,7 @@ process_tags <- function(tag) {
 
     for (name in names(attribs)) {
       val <- attribs[[name]]
-      if (!is.function(val)) {
+      if (!is_nacre_reactive(val)) {
         kept_attribs[[name]] <- val
         next
       }
