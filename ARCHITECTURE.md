@@ -132,6 +132,11 @@ process them.
 
 ## Remaining Work
 
+### `nacreApp` entrypoint
+
+Currently expects a fn with zero args. Instead it should be closer to
+`renderNacre()` -- take a expr that results in a tag tree
+
 ### `Each` — keyed-by-identity rendering
 
 Currently destroys and recreates all items on any list change. Should reorder
