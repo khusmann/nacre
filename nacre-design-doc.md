@@ -40,7 +40,7 @@ runNacreApp(function() {
     tags$input(
       type = "range", min = 0, max = 100,
       value = count,
-      onInput = \(e) count(as.numeric(e$target$value))
+      onInput = \(value) count(as.numeric(value))
     ),
     tags$button(
       disabled = \() count() == 0,
@@ -67,7 +67,7 @@ runNacreApp(function() {
 
   fluidPage(
     tags$input(type = "text", value = name,
-      onInput = event_debounce(\(e) name(e$target$value), 150)),
+      onInput = event_debounce(\(value) name(value), 150)),
     tags$p(\() paste("Hello,", name()))
   )
 })
@@ -98,7 +98,7 @@ server <- function(input, output, session) {
       tags$input(
         type = "range", min = 0, max = 1, step = 0.1,
         value = threshold,
-        onInput = event_throttle(\(e) threshold(as.numeric(e$target$value)), 100)
+        onInput = event_throttle(\(value) threshold(as.numeric(value)), 100)
       ),
       tags$span(\() paste("Threshold:", threshold()))
     )
@@ -151,6 +151,30 @@ tags$span(name)         # works — reactiveVal is a function
 tags$span(\() name())   # also works — anonymous function
 ```
 
+### Reactive Children
+
+Tag children can also be reactive functions, but they must return **text only** — not tag trees. Use control flow primitives (`When`, `Match`, `Each`, `Index`) for structural changes.
+
+```r
+# Reactive text child — works
+tags$span(\() paste("Count:", count()))
+
+# Structural changes — use When(), not a reactive child
+tags$div(When(show, tags$p("Hello"), otherwise = tags$span("Bye")))
+```
+
+If a reactive child returns a tag instead of text, the framework throws an error.
+
+### Event Callbacks
+
+Event callbacks receive `(value, id)` as function arguments — not a JavaScript event object. `value` is the element's current value (or `NULL` for events like `onClick`). `id` is the element's ID. Users define callbacks with 0, 1, or 2 parameters as needed:
+
+```r
+onInput = \(value) threshold(as.numeric(value))  # just need value
+onClick = \(value, id) handle_click(id)           # need id
+onClick = \() count(count() + 1)                  # neither
+```
+
 ### Controlled Inputs
 
 Inputs are controlled by binding their `value` attribute to a `reactiveVal`:
@@ -161,7 +185,7 @@ threshold <- reactiveVal(0.5)
 tags$input(
   type = "range", min = 0, max = 1, step = 0.1,
   value = threshold,
-  onInput = \(e) threshold(as.numeric(e$target$value))
+  onInput = \(value) threshold(as.numeric(value))
 )
 ```
 
@@ -174,11 +198,11 @@ name <- reactiveVal("")
 
 tags$div(
   tags$input(type = "text", value = name,
-    onInput = \(e) name(e$target$value)),
+    onInput = \(value) name(value)),
   tags$input(type = "text", value = name,
-    onInput = \(e) name(e$target$value)),
+    onInput = \(value) name(value)),
   tags$input(type = "text", value = name,
-    onInput = \(e) name(e$target$value))
+    onInput = \(value) name(value))
 )
 ```
 
@@ -213,7 +237,7 @@ Shiny.addCustomMessageHandler('nacre-attr', function(msg) {
 
 ## Control Flow Primitives
 
-Because the component function runs **once** (like Solid, unlike React), you can't use plain `if`/`else` for conditional rendering — it would only evaluate at setup time. nacre provides five control flow primitives:
+Because the component function runs **once** (like Solid, unlike React), you can't use plain `if`/`else` for conditional rendering — it would only evaluate at setup time. nacre provides six control flow primitives:
 
 ### When
 
@@ -247,7 +271,7 @@ Match(
 
 ### Each
 
-Dynamic lists. Replaces `renderUI(lapply(...))`:
+Dynamic lists keyed by identity (like Solid's `<For>`). Replaces `renderUI(lapply(...))`:
 
 ```r
 items <- reactiveVal(list("a", "b", "c"))
@@ -255,11 +279,27 @@ items <- reactiveVal(list("a", "b", "c"))
 tags$ul(
   Each(items, \(item, index) {
     tags$li(\() item())
-  }, key = "id")
+  })
 )
 ```
 
-Keyed by default — reordering items moves DOM nodes instead of recreating them.
+Keyed by item reference — reordering items moves DOM nodes instead of recreating them. Internal state (focus, checkbox state, local reactives) is preserved when items move.
+
+### Index
+
+Dynamic lists keyed by position (like Solid's `<Index>`). Cheaper for simple, non-stateful lists:
+
+```r
+items <- reactiveVal(list("a", "b", "c"))
+
+tags$ul(
+  Index(items, \(item, index) {
+    tags$li(\() item())
+  })
+)
+```
+
+Each DOM node stays at its index position. When the item at that position changes, the content updates in place. Use this when you don't need to preserve per-item state across reorders.
 
 ### Portal
 
@@ -311,7 +351,7 @@ App <- function() {
   ycol <- reactiveVal("mpg")
 
   fluidPage(
-    tags$select(value = xcol, onChange = \(e) xcol(e$target$value),
+    tags$select(value = xcol, onChange = \(value) xcol(value),
       tags$option("wt"), tags$option("mpg"), tags$option("hp")
     ),
 
@@ -331,8 +371,9 @@ Under the hood:
 
 ```r
 nacre_output <- function(render_fn, output_fn, expr, ...) {
-  id <- nacre_auto_id()
-  observe({ output[[id]] <- render_fn(expr, ...) })
+  id <- paste0("nacre-", nacre_auto_id())
+  session <- getDefaultReactiveDomain()
+  observe({ session$output[[id]] <- render_fn(expr, ...) })
   output_fn(id)
 }
 ```
@@ -359,7 +400,7 @@ Waits until the user pauses for the specified duration. Good for text input:
 tags$input(
   type = "text",
   value = name,
-  onInput = event_debounce(\(e) name(e$target$value), 150)
+  onInput = event_debounce(\(value) name(value), 150)
 )
 ```
 
@@ -371,7 +412,7 @@ Fires at most every N milliseconds while the event is active. Good for sliders a
 tags$input(
   type = "range",
   value = threshold,
-  onInput = event_throttle(\(e) threshold(as.numeric(e$target$value)), 100)
+  onInput = event_throttle(\(value) threshold(as.numeric(value)), 100)
 )
 ```
 
@@ -493,14 +534,15 @@ No orphaned observers polluting the reactive graph.
 | `nacreOutput(id)` / `renderNacre(expr)` | Drop nacre into an existing Shiny app |
 | `When(condition, yes, otherwise)` | Conditional rendering |
 | `Match(Case(...), ..., Default(...))` | Multi-branch conditional |
-| `Each(reactive_list, fn, key)` | Dynamic lists |
+| `Each(reactive_list, fn)` | Dynamic lists (keyed by identity) |
+| `Index(reactive_list, fn)` | Dynamic lists (keyed by position) |
 | `Portal(target_id, content)` | Render elsewhere in DOM |
 | `Catch(content, fallback)` | Error boundary |
 | `nacre_output(render_fn, output_fn, expr, ...)` | Inline Shiny output (any render/output pair) |
 | `event_debounce(fn, ms)` | Debounce an event callback |
 | `event_throttle(fn, ms)` | Throttle an event callback |
 
-That's it. Ten functions on top of existing Shiny.
+That's it. Eleven functions on top of existing Shiny.
 
 ---
 
@@ -542,14 +584,14 @@ runNacreApp(function() {
       tags$div(class = "settings",
         tags$select(
           value = dataset,
-          onChange = \(e) dataset(e$target$value),
+          onChange = \(value) dataset(value),
           tags$option("mtcars"),
           tags$option("iris"),
           tags$option("airquality")
         ),
         tags$select(
           value = selected_col,
-          onChange = \(e) selected_col(e$target$value),
+          onChange = \(value) selected_col(value),
           Each(cols, \(col) tags$option(value = col, col))
         ),
         tags$input(
@@ -557,7 +599,7 @@ runNacreApp(function() {
           min = 0, max = 100,
           value = threshold,
           onInput = event_throttle(
-            \(e) threshold(as.numeric(e$target$value)), 100
+            \(value) threshold(as.numeric(value)), 100
           )
         )
       )
@@ -599,9 +641,10 @@ runNacreApp(function() {
 ### Phase 3: Control flow
 
 - `When` / `Match` / `Case` with observer lifecycle management
-- `Each` with keyed list diffing
+- `Each` (identity-keyed) and `Index` (position-keyed) list rendering
 - `Portal`
 - `Catch`
+- Observer cleanup: each item/branch must track its observers so they can be destroyed as a group when content is swapped or removed
 
 ### Phase 4: Shiny integration
 
@@ -627,4 +670,4 @@ runNacreApp(function() {
 
 6. **Existing Shiny outputs still work.** `renderPlot`, `renderTable`, `renderUI` — use them alongside nacre. Migrate incrementally.
 
-7. **Small API.** Ten new functions. Everything else is Shiny you already know.
+7. **Small API.** Eleven new functions. Everything else is Shiny you already know.
