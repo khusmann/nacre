@@ -1,5 +1,6 @@
 export(nacreApp)
 export(nacreOutput)
 export(renderNacre)
+export(When)
 import(shiny)
 import(htmltools)

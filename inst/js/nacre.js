@@ -19,6 +19,12 @@
     }
   });
 
+  Shiny.addCustomMessageHandler('nacre-swap', function(msg) {
+    var el = document.getElementById(msg.id);
+    if (!el) return;
+    el.innerHTML = msg.html;
+  });
+
   Shiny.addCustomMessageHandler('nacre-events', function(msgs) {
     msgs.forEach(function(msg) {
       var el = document.getElementById(msg.id);

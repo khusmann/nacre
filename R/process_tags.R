@@ -9,9 +9,21 @@ nacre_next_id <- function() {
 process_tags <- function(tag) {
   bindings <- list()
   events <- list()
+  control_flows <- list()
 
   walk <- function(node) {
     if (is.null(node)) return(NULL)
+
+    if (inherits(node, "nacre_when")) {
+      id <- nacre_next_id()
+      control_flows[[length(control_flows) + 1L]] <<- list(
+        type = "when", id = id,
+        condition = node$condition,
+        yes = node$yes,
+        otherwise = node$otherwise
+      )
+      return(tags$div(id = id, style = "display:contents"))
+    }
 
     if (is.function(node)) {
       id <- nacre_next_id()
@@ -79,5 +91,6 @@ process_tags <- function(tag) {
   }
 
   cleaned_tag <- walk(tag)
-  list(tag = cleaned_tag, bindings = bindings, events = events)
+  list(tag = cleaned_tag, bindings = bindings, events = events,
+       control_flows = control_flows)
 }

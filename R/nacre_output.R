@@ -19,48 +19,10 @@ renderNacre <- function(expr, env = parent.frame(), quoted = FALSE) {
   renderUI({
     session <- getDefaultReactiveDomain()
     tag_tree <- isolate(func())
-
     result <- process_tags(tag_tree)
 
     session$onFlushed(function() {
-      # Set up event listeners
-      if (length(result$events) > 0L) {
-        event_msgs <- lapply(result$events, function(ev) {
-          input_id <- paste0("nacre_ev_", ev$id, "_", ev$event)
-          handler <- ev$handler
-          nformals <- length(formals(handler))
-
-          observeEvent(session$input[[input_id]], {
-            ev_data <- session$input[[input_id]]
-            if (nformals == 0L) {
-              handler()
-            } else if (nformals == 1L) {
-              handler(ev_data$value)
-            } else {
-              handler(ev_data$value, ev_data$id)
-            }
-          }, ignoreInit = TRUE)
-
-          list(
-            id = ev$id,
-            event = ev$event,
-            inputId = session$ns(input_id)
-          )
-        })
-        session$sendCustomMessage("nacre-events", event_msgs)
-      }
-
-      # Set up reactive attribute bindings
-      lapply(result$bindings, function(b) {
-        observe({
-          val <- b$fn()
-          session$sendCustomMessage("nacre-attr", list(
-            id = b$id,
-            attr = b$attr,
-            value = val
-          ))
-        })
-      })
+      nacre_mount_processed(result, session)
     }, once = TRUE)
 
     result$tag
