@@ -44,7 +44,7 @@ renderNacre <- function(expr, env = parent.frame(), quoted = FALSE) {
           list(
             id = ev$id,
             event = ev$event,
-            inputId = input_id
+            inputId = session$ns(input_id)
           )
         })
         session$sendCustomMessage("nacre-events", event_msgs)
