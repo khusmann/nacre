@@ -25,6 +25,8 @@ process_tags <- function(tag) {
       return(tags$div(id = id, style = "display:contents"))
     }
 
+    if (inherits(node, "html_dependency")) return(node)
+
     if (is.function(node)) {
       id <- nacre_next_id()
       bindings[[length(bindings) + 1L]] <<- list(

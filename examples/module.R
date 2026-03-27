@@ -1,16 +1,21 @@
 library(shiny)
+library(bslib)
 library(nacre)
-
 
 Counter <- function(count) {
   tags$div(
-    tags$h2(\() paste("Count:", count())),
+    tags$h2(
+      class = "text-center",
+      \() paste("Count:", count())
+    ),
     tags$input(
       type = "range", min = 0, max = 100,
+      class = "form-range",
       value = count,
       onInput = \(value) count(as.numeric(value))
     ),
     tags$button(
+      class = "btn btn-outline-secondary btn-sm",
       disabled = \() count() == 0,
       onClick = \() count(0),
       "Reset"
@@ -18,12 +23,14 @@ Counter <- function(count) {
   )
 }
 
-# A nacre component used inside a Shiny module
 counterUI <- function(id) {
   ns <- NS(id)
-  tagList(
-    nacreOutput(ns("counter")),
-    verbatimTextOutput(ns("debug"))
+  card(
+    card_header(id),
+    card_body(
+      nacreOutput(ns("counter")),
+      verbatimTextOutput(ns("debug"))
+    )
   )
 }
 
@@ -35,18 +42,18 @@ counterServer <- function(id) {
   })
 }
 
-# Two instances of the same module on one page
-ui <- fluidPage(
-  h1("Nacre + Shiny Modules"),
-  fluidRow(
-    column(6, h3("Module A"), counterUI("a")),
-    column(6, h3("Module B"), counterUI("b"))
+ui <- page_fluid(
+  theme = bs_theme(bootswatch = "minty"),
+  tags$h3("Nacre + Shiny Modules"),
+  layout_columns(
+    counterUI("A"),
+    counterUI("B")
   )
 )
 
 server <- function(input, output, session) {
-  counterServer("a")
-  counterServer("b")
+  counterServer("A")
+  counterServer("B")
 }
 
 shinyApp(ui, server)

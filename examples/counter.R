@@ -1,4 +1,5 @@
 library(shiny)
+library(bslib)
 library(nacre)
 
 CounterApp <- function() {
@@ -9,20 +10,29 @@ CounterApp <- function() {
     sprintf("rgb(%d,0,%d)", r, b)
   })
 
-  tags$div(
-    tags$h1(
-      style = \() paste0("color:", color()),
-      \() paste("Count:", count())
-    ),
-    tags$input(
-      type = "range", min = 0, max = 100,
-      value = count,
-      onInput = \(value) count(as.numeric(value))
-    ),
-    tags$button(
-      disabled = \() count() == 0,
-      onClick = \() count(0),
-      "Reset"
+  page_fluid(
+    theme = bs_theme(bootswatch = "minty"),
+    card(
+      card_header("Counter"),
+      card_body(
+        tags$h1(
+          class = "text-center",
+          style = \() paste0("color:", color()),
+          \() paste("Count:", count())
+        ),
+        tags$input(
+          type = "range", min = 0, max = 100,
+          class = "form-range",
+          value = count,
+          onInput = \(value) count(as.numeric(value))
+        ),
+        tags$button(
+          class = "btn btn-outline-secondary",
+          disabled = \() count() == 0,
+          onClick = \() count(0),
+          "Reset"
+        )
+      )
     )
   )
 }

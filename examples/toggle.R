@@ -1,20 +1,33 @@
 library(shiny)
+library(bslib)
 library(nacre)
 
 ToggleApp <- function() {
   show <- reactiveVal(TRUE)
 
-  tags$div(
-    tags$button(
-      onClick = \() show(!show()),
-      "Toggle"
-    ),
-    When(show,
-      tags$div(
-        tags$h2("Visible!"),
-        tags$p(style = "color:green", "This content is shown")
-      ),
-      otherwise = tags$p(style = "color:red", "Hidden — showing fallback")
+  page_fluid(
+    theme = bs_theme(bootswatch = "minty"),
+    card(
+      card_header("When / Toggle"),
+      card_body(
+        tags$button(
+          class = "btn btn-primary mb-3",
+          onClick = \() show(!show()),
+          \() if (show()) "Hide Content" else "Show Content"
+        ),
+        When(show,
+          tags$div(
+            class = "alert alert-success",
+            tags$strong("Visible!"),
+            " This content is shown."
+          ),
+          otherwise = tags$div(
+            class = "alert alert-warning",
+            tags$strong("Hidden."),
+            " Showing the fallback instead."
+          )
+        )
+      )
     )
   )
 }

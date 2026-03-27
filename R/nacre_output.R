@@ -7,7 +7,7 @@ nacreApp <- function(fn, ...) {
 }
 
 nacreOutput <- function(id) {
-  tagList(
+  htmltools::attachDependencies(
     uiOutput(id),
     nacre_dependency()
   )
