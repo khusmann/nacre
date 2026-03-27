@@ -20,7 +20,7 @@ process_tags <- function(tag) {
   walk <- function(node) {
     if (is.null(node)) return(NULL)
 
-    if (inherits(node, "shiny_output")) {
+    if (inherits(node, "nacre_output")) {
       shiny_outputs[[length(shiny_outputs) + 1L]] <<- list(
         id = node$id,
         render_call = node$render_call
@@ -139,4 +139,13 @@ process_tags <- function(tag) {
   cleaned_tag <- walk(tag)
   list(tag = cleaned_tag, bindings = bindings, events = events,
        control_flows = control_flows, shiny_outputs = shiny_outputs)
+}
+
+nacre_dependency <- function() {
+  htmltools::htmlDependency(
+    name = "nacre",
+    version = "0.0.1",
+    src = system.file("js", package = "nacre"),
+    script = "nacre.js"
+  )
 }

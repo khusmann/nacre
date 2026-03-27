@@ -76,7 +76,7 @@ PlotPage <- function() {
       value = bins,
       onInput = event_throttle(\(value) bins(as.numeric(value)), 100)
     ),
-    shiny_output(renderPlot, plotOutput, {
+    PlotOutput({
       x <- faithful[, 2]
       b <- seq(min(x), max(x), length.out = bins() + 1)
       hist(x, breaks = b, col = "darkgray", border = "white",
@@ -95,7 +95,7 @@ AboutPage <- function() {
       tags$li(tags$strong("Match/Case/Default"), " — tab switching"),
       tags$li(tags$strong("When"), " — toggle stats visibility"),
       tags$li(tags$strong("Index"), " — dynamic item list"),
-      tags$li(tags$strong("shiny_output"), " — inline plot")
+      tags$li(tags$strong("Output"), " — inline plot")
     )
   )
 }

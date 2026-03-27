@@ -16,7 +16,7 @@ OutputApp <- function() {
         onInput = event_throttle(\(value) bins(as.numeric(value)), 100)
       )
     ),
-    shiny_output(renderPlot, plotOutput, {
+    PlotOutput({
       x <- faithful[, 2]
       b <- seq(min(x), max(x), length.out = bins() + 1)
       hist(x, breaks = b, col = "darkgray", border = "white",
