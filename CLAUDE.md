@@ -5,6 +5,8 @@
 - One-line commit messages unless directed otherwise
 - Do not include Co-Authored-By
 
+- If there are uncommitted changes and the user asks for something unrelated to the current work, suggest committing first before switching directions
+
 ## Build
 
 - Run `devtools::document()` after changing exports or roxygen comments
