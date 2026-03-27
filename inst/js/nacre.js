@@ -100,7 +100,7 @@
       s.value = el.value;
       s.id = msg.id;
       if (!s.timerRunning) {
-        if (s.leading) {
+        if (s.leading && !(s.coalesce && s.serverBusy)) {
           // Fire immediately, start cooldown timer
           var val = s.value; var id = s.id;
           s.value = null; s.id = null;

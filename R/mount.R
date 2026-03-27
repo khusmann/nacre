@@ -14,6 +14,8 @@ nacre_mount_processed <- function(result, session) {
       nformals <- length(formals(handler))
 
       obs <- observeEvent(session$input[[input_id]], {
+        latency <- getOption("nacre.debug.latency", 0)
+        if (latency > 0) Sys.sleep(latency)
         ev_data <- session$input[[input_id]]
         if (nformals == 0L) {
           handler()
