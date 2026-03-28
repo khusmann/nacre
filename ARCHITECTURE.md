@@ -74,18 +74,18 @@ branch.
 **Each** — Keyed by identity (like Solid's `For`). The callback receives each
 item as a **plain value** and an optional index: `fn(item)` or `fn(item, i)`.
 Currently destroys and recreates all items on any list change. Future: the `by`
-argument will extract a comparable key from each item, enabling DOM node reuse
-— kept items have their nodes reordered, new items are mounted, removed items
-are destroyed. Needs a new client-side `nacre-reorder` message to insert,
-remove, and reorder individual child nodes by ID.
+argument will extract a comparable key from each item, enabling DOM node reuse —
+kept items have their nodes reordered, new items are mounted, removed items are
+destroyed. Needs a new client-side `nacre-reorder` message to insert, remove,
+and reorder individual child nodes by ID.
 
-**Index** — Keyed by position (like Solid's `Index`). The callback receives
-each item as a **reactive accessor** (`reactiveVal`) and an optional index:
+**Index** — Keyed by position (like Solid's `Index`). The callback receives each
+item as a **reactive accessor** (`reactiveVal`) and an optional index:
 `fn(item)` or `fn(item, i)` where `i` is a fixed integer. If the length is
-stable, each slot's `reactiveVal` is updated in place so existing observers
-fire with the new values without DOM recreation. Currently does a full rebuild
-when list length changes. Future: incremental add/remove — grow by appending
-new slots, shrink by destroying trailing slots.
+stable, each slot's `reactiveVal` is updated in place so existing observers fire
+with the new values without DOM recreation. Currently does a full rebuild when
+list length changes. Future: incremental add/remove — grow by appending new
+slots, shrink by destroying trailing slots.
 
 ## Client-Side Protocol
 
@@ -161,8 +161,8 @@ Currently does a full rebuild when list length changes. Needs:
 
 ### `Portal` (planned)
 
-Not yet implemented. Would render content into a different DOM target.
-Needs `process_tags` handling and client-side support.
+Not yet implemented. Would render content into a different DOM target. Needs
+`process_tags` handling and client-side support.
 
 ### `Catch` (planned)
 
@@ -182,6 +182,10 @@ a way to distinguish "server echoing back what the user typed" (skip) from
 
 Reactive children should return text only. Currently no validation — non-text
 returns silently produce unexpected output.
+
+### Each / For
+
+Should I rename Each -> For to match Solid.js?
 
 ### Testing
 
