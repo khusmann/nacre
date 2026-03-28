@@ -25,8 +25,25 @@ nacre_mount_processed <- function(result, session) {
         latency <- getOption("nacre.debug.latency", 0)
         if (latency > 0) Sys.sleep(latency)
         ev_data <- session$input[[input_id]]
+
+        # Thread event sequence number for optimistic update tracking.
+        # Store both the sequence and the source element ID so binding
+        # observers only attach the sequence when the binding target
+        # matches the event source (same element). Cross-element updates
+        # (e.g. button click clearing a text input) arrive with no
+        # sequence and are treated as programmatic by the client.
+        seq <- ev_data[["__nacre_seq"]]
+        if (!is.null(seq)) {
+          session$userData$nacre_current_sequence <- list(
+            seq = seq, source = ev_data[["id"]]
+          )
+          session$onFlushed(function() {
+            session$userData$nacre_current_sequence <- NULL
+          }, once = TRUE)
+        }
+
         event_obj <- lapply(
-          ev_data[setdiff(names(ev_data), c("id", "nonce"))],
+          ev_data[setdiff(names(ev_data), c("id", "nonce", "__nacre_seq"))],
           function(x) if (is.null(x)) NA else x
         )
         if (nformals == 0L) {
@@ -57,11 +74,12 @@ nacre_mount_processed <- function(result, session) {
   lapply(result$bindings, function(b) {
     obs <- observe({
       val <- b$fn()
-      session$sendCustomMessage("nacre-attr", list(
-        id = b$id,
-        attr = b$attr,
-        value = val
-      ))
+      msg <- list(id = b$id, attr = b$attr, value = val)
+      seq_info <- session$userData$nacre_current_sequence
+      if (!is.null(seq_info) && seq_info$source == b$id) {
+        msg$sequence <- seq_info$seq
+      }
+      session$sendCustomMessage("nacre-attr", msg)
     })
     observers[[length(observers) + 1L]] <<- obs
   })

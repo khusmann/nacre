@@ -169,14 +169,51 @@ Not yet implemented. Would render content into a different DOM target. Needs
 Not yet implemented. Would provide error boundaries: if any `observe()` inside
 the content tree errors, tear it down and render a fallback.
 
-### Controlled input: programmatic update while focused
+### Controlled input: optimistic updates
 
-The optimistic update logic in `nacre.js` skips setting `el.value` when the
-element is focused (`document.activeElement === el`) to prevent cursor jumping
-during typing. This also blocks programmatic clears — e.g. `new_text("")` after
-adding a todo doesn't visually clear the input because it's still focused. Needs
-a way to distinguish "server echoing back what the user typed" (skip) from
-"server is setting a new value" (apply).
+When a user types into a focused input, the server echoes the value back through
+the reactive binding. Without care, this echo can cause cursor jumping or
+overwrite characters the user typed while the server was processing. Conversely,
+programmatic updates (e.g. clearing an input after form submission) must always
+apply, even while the element is focused.
+
+**Sequence numbers** solve this. Each event payload includes an incrementing
+`__nacre_seq`. The R event observer stores it on
+`session$userData$nacre_current_sequence` and registers `session$onFlushed` to
+clear it after the flush completes. Binding observers attach the sequence to
+`nacre-attr` messages when present. On the client, `nacre-attr` for `value` on a
+focused element uses the sequence to decide:
+
+- **Stale echo** (sequence < client's latest sent) → skip.
+- **Current echo, same value** (sequence ≥ latest sent, `el.value === msg.value`)
+  → no-op skip (avoids cursor position reset).
+- **Server transform** (sequence ≥ latest sent, different value) → apply (e.g.
+  server uppercases input).
+- **Programmatic update** (no sequence) → always apply.
+
+Key design points:
+
+- **`onFlushed` for cleanup.** The sequence is stored as a plain (non-reactive)
+  session variable so binding observers can read it without creating a reactive
+  dependency. `session$onFlushed(once = TRUE)` clears it after the entire reactive
+  chain settles — derived reactives and chained observers all see the sequence
+  within the same flush, but the next flush starts clean.
+
+- **Cross-element updates.** The R side stores both the sequence and the source
+  element ID. Binding observers only attach the sequence when `b$id` matches the
+  event source. If a button click's handler clears a text input, the text input's
+  binding sees a different source and omits the sequence — so the client treats it
+  as a programmatic update and applies it. Without this, the button's sequence
+  (e.g. 1) would be compared against the text input's independent counter (e.g. 5)
+  and incorrectly rejected as stale.
+
+- **Multiple events in one flush.** If two event observers run in the same flush,
+  the later one's sequence overwrites the earlier. This is correct — it means all
+  bindings in that flush are tagged with the latest sequence, which is the most
+  conservative (least likely to be considered stale).
+
+- **`__nacre_seq` is excluded** from the `event_obj` passed to user handlers, so
+  it is an internal-only field.
 
 ### Reactive child validation
 

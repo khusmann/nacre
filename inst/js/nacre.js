@@ -1,11 +1,20 @@
 (function() {
   var defined = new Set();
+  var sequences = {};  // element id -> latest sent sequence number
   var PROP_ATTRS = { value: true, disabled: true, checked: true, selected: true };
 
   Shiny.addCustomMessageHandler('nacre-attr', function(msg) {
     var el = document.getElementById(msg.id);
     if (!el) return;
-    if (document.activeElement === el && msg.attr === 'value') return;
+    if (msg.attr === 'value' && document.activeElement === el) {
+      if (msg.sequence !== undefined && msg.sequence !== null) {
+        if (sequences[msg.id] !== undefined && msg.sequence < sequences[msg.id]) {
+          return; // Stale echo from earlier event, skip
+        }
+      }
+      // Programmatic (no sequence) or up-to-date: apply, but skip no-op
+      if (el.value === msg.value) return;
+    }
     if (PROP_ATTRS[msg.attr]) {
       el[msg.attr] = msg.value;
     } else if (msg.value === false || msg.value === null) {
@@ -54,6 +63,8 @@
     }
     payload.id = id;
     payload.nonce = Math.random();
+    if (!sequences[id]) sequences[id] = 0;
+    payload.__nacre_seq = ++sequences[id];
     return payload;
   }
 
