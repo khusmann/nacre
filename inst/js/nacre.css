@@ -1,7 +1,24 @@
 html.nacre-stale {
-  filter: saturate(0.3) brightness(0.95);
+  filter: saturate(0) brightness(0.85);
   transition: filter 0.15s ease-in;
 }
 html:not(.nacre-stale) {
   transition: filter 0.15s ease-out;
+}
+
+html.nacre-stale::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  z-index: 99999;
+  background: linear-gradient(90deg, transparent, var(--nacre-stale-color, #6c757d) 50%, transparent);
+  animation: nacre-progress 1.2s ease-in-out infinite;
+}
+
+@keyframes nacre-progress {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
