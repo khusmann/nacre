@@ -143,11 +143,6 @@ process them.
 
 ## Remaining Work
 
-### Scope events by session
-
-Events are currently global so multiple sessions are tied together. Need to
-scope events to just the current session.
-
 ### `Each` — keyed reordering
 
 Currently destroys and recreates all items on any list change. Needs:

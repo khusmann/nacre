@@ -1,18 +1,27 @@
 #' Create a nacre application
 #'
-#' Builds a Shiny app from a nacre tag tree. The tag tree is processed at build
-#' time into static HTML; reactive bindings and event handlers are mounted
-#' automatically on the server side.
+#' Builds a Shiny app from a function that returns a nacre tag tree. The
+#' function is called once per session so that each client gets its own
+#' reactive state.
 #'
-#' @param tag_tree A nacre tag tree (e.g. a `page_sidebar()` call containing
-#'   reactive attributes and event handlers).
+#' @param fn A zero-argument function that returns a nacre tag tree (e.g. a
+#'   `page_sidebar()` call containing reactive attributes and event handlers).
 #' @param ... Additional arguments passed to [shiny::shinyApp()].
 #' @return A Shiny app object.
 #' @export
-nacreApp <- function(tag_tree, ...) {
-  result <- process_tags(tag_tree)
-  ui <- htmltools::attachDependencies(result$tag, nacre_dependency())
+nacreApp <- function(fn, ...) {
+  # We avoid uiOutput/renderUI here so the app's tag tree is the top-level
+  # document (no wrapper div). Instead, ui() and server both call fn() +
+  # process_tags() independently — the local ID counter in process_tags
+  # ensures they produce matching element IDs.
+  ui <- function(req) {
+    htmltools::attachDependencies(
+      process_tags(fn())$tag,
+      nacre_dependency()
+    )
+  }
   server <- function(input, output, session) {
+    result <- process_tags(fn())
     nacre_mount_processed(result, session)
   }
   shinyApp(ui, server, ...)

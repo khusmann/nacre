@@ -122,12 +122,11 @@ Match <- function(...) {
 #' @export
 Output <- function(render_fn, output_fn, expr, ...,
                    env = parent.frame(), quoted = FALSE) {
-  id <- nacre_next_id()
   expr_q <- if (quoted) expr else substitute(expr)
   render_call <- eval(as.call(list(substitute(render_fn), expr_q)), env)
   result <- list(
-    id = id,
-    output_tag = output_fn(id, ...),
+    output_fn = output_fn,
+    output_fn_args = list(...),
     render_call = render_call
   )
   class(result) <- "nacre_output"

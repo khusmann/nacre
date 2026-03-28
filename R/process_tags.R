@@ -11,18 +11,16 @@ is_nacre_reactive <- function(x) {
     inherits(x, "nacre_rate_limited"))
 }
 
-nacre_id_counter <- new.env(parent = emptyenv())
-nacre_id_counter$value <- 0L
-
-#' Generate a unique nacre element ID
+#' Create a local ID counter for use within a single `process_tags` call
 #'
-#' Returns an auto-incrementing ID of the form `"nacre-1"`, `"nacre-2"`, etc.
-#'
-#' @return A character string.
+#' @return A function that returns the next ID each time it is called.
 #' @keywords internal
-nacre_next_id <- function() {
-  nacre_id_counter$value <- nacre_id_counter$value + 1L
-  paste0("nacre-", nacre_id_counter$value)
+nacre_id_counter <- function() {
+  value <- 0L
+  function() {
+    value <<- value + 1L
+    paste0("nacre-", value)
+  }
 }
 
 #' Walk a tag tree and extract reactive bindings
@@ -36,7 +34,8 @@ nacre_next_id <- function() {
 #' @return A list with elements `$tag`, `$bindings`, `$events`,
 #'   `$control_flows`, and `$shiny_outputs`.
 #' @keywords internal
-process_tags <- function(tag) {
+process_tags <- function(tag, counter = nacre_id_counter()) {
+  next_id <- counter
   bindings <- list()
   events <- list()
   control_flows <- list()
@@ -46,15 +45,16 @@ process_tags <- function(tag) {
     if (is.null(node)) return(NULL)
 
     if (inherits(node, "nacre_output")) {
+      id <- next_id()
       shiny_outputs[[length(shiny_outputs) + 1L]] <<- list(
-        id = node$id,
+        id = id,
         render_call = node$render_call
       )
-      return(node$output_tag)
+      return(do.call(node$output_fn, c(list(id), node$output_fn_args)))
     }
 
     if (inherits(node, "nacre_each") || inherits(node, "nacre_index")) {
-      id <- nacre_next_id()
+      id <- next_id()
       type <- if (inherits(node, "nacre_each")) "each" else "index"
       control_flows[[length(control_flows) + 1L]] <<- list(
         type = type, id = id,
@@ -64,7 +64,7 @@ process_tags <- function(tag) {
     }
 
     if (inherits(node, "nacre_match")) {
-      id <- nacre_next_id()
+      id <- next_id()
       control_flows[[length(control_flows) + 1L]] <<- list(
         type = "match", id = id,
         cases = node$cases
@@ -73,7 +73,7 @@ process_tags <- function(tag) {
     }
 
     if (inherits(node, "nacre_when")) {
-      id <- nacre_next_id()
+      id <- next_id()
       control_flows[[length(control_flows) + 1L]] <<- list(
         type = "when", id = id,
         condition = node$condition,
@@ -84,7 +84,7 @@ process_tags <- function(tag) {
     }
 
     if (is.function(node) && is_nacre_reactive(node)) {
-      id <- nacre_next_id()
+      id <- next_id()
       bindings[[length(bindings) + 1L]] <<- list(
         id = id, attr = "textContent", fn = node
       )
@@ -141,7 +141,7 @@ process_tags <- function(tag) {
     }
 
     if (length(pending_bindings) > 0L || length(pending_events) > 0L) {
-      id <- if (!is.null(kept_attribs$id)) kept_attribs$id else nacre_next_id()
+      id <- if (!is.null(kept_attribs$id)) kept_attribs$id else next_id()
       kept_attribs$id <- id
 
       for (b in pending_bindings) {
@@ -163,7 +163,8 @@ process_tags <- function(tag) {
 
   cleaned_tag <- walk(tag)
   list(tag = cleaned_tag, bindings = bindings, events = events,
-       control_flows = control_flows, shiny_outputs = shiny_outputs)
+       control_flows = control_flows, shiny_outputs = shiny_outputs,
+       counter = counter)
 }
 
 #' nacre JavaScript dependency

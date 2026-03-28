@@ -4,11 +4,11 @@
 \alias{nacreApp}
 \title{Create a nacre application}
 \usage{
-nacreApp(tag_tree, ...)
+nacreApp(fn, ...)
 }
 \arguments{
-\item{tag_tree}{A nacre tag tree (e.g. a \code{page_sidebar()} call containing
-reactive attributes and event handlers).}
+\item{fn}{A zero-argument function that returns a nacre tag tree (e.g. a
+\code{page_sidebar()} call containing reactive attributes and event handlers).}
 
 \item{...}{Additional arguments passed to \code{\link[shiny:shinyApp]{shiny::shinyApp()}}.}
 }
@@ -16,7 +16,7 @@ reactive attributes and event handlers).}
 A Shiny app object.
 }
 \description{
-Builds a Shiny app from a nacre tag tree. The tag tree is processed at build
-time into static HTML; reactive bindings and event handlers are mounted
-automatically on the server side.
+Builds a Shiny app from a function that returns a nacre tag tree. The
+function is called once per session so that each client gets its own
+reactive state.
 }

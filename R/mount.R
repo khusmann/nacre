@@ -1,18 +1,3 @@
-#' Process and mount a nacre tag tree
-#'
-#' Calls [process_tags()] on a raw tag tree, then mounts the result into the
-#' given Shiny session.
-#'
-#' @param tag_tree A nacre tag tree (typically the return value of a component
-#'   function).
-#' @param session A Shiny session object.
-#' @return A mount handle with a `$destroy()` method.
-#' @keywords internal
-nacre_mount <- function(tag_tree, session) {
-  result <- process_tags(tag_tree)
-  nacre_mount_processed(result, session)
-}
-
 #' Mount a pre-processed nacre tag tree
 #'
 #' Takes the output of [process_tags()] and wires up Shiny observers for
@@ -26,6 +11,7 @@ nacre_mount <- function(tag_tree, session) {
 #'   (a function that tears down all observers).
 #' @keywords internal
 nacre_mount_processed <- function(result, session) {
+  counter <- result$counter
   observers <- list()
 
   # Set up event listeners
@@ -104,7 +90,7 @@ nacre_mount_processed <- function(result, session) {
           }
 
           if (!is.null(branch)) {
-            processed <- process_tags(branch)
+            processed <- process_tags(branch, counter = counter)
 
             # Swap first so elements exist in DOM
             session$sendCustomMessage("nacre-swap", list(
@@ -151,7 +137,7 @@ nacre_mount_processed <- function(result, session) {
               cf_fn(item_fn, i)
             })
             tag_list <- tagList(children)
-            processed <- process_tags(tag_list)
+            processed <- process_tags(tag_list, counter = counter)
 
             session$sendCustomMessage("nacre-swap", list(
               id = cf_id,
@@ -199,7 +185,7 @@ nacre_mount_processed <- function(result, session) {
                 cf_fn(env$slots[[i]], i)
               })
               tag_list <- tagList(children)
-              processed <- process_tags(tag_list)
+              processed <- process_tags(tag_list, counter = counter)
 
               session$sendCustomMessage("nacre-swap", list(
                 id = cf_id,
@@ -247,7 +233,7 @@ nacre_mount_processed <- function(result, session) {
           }
 
           if (!is.null(branch)) {
-            processed <- process_tags(branch)
+            processed <- process_tags(branch, counter = counter)
             session$sendCustomMessage("nacre-swap", list(
               id = cf_id,
               html = as.character(processed$tag)
