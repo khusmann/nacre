@@ -236,16 +236,19 @@ indicator. Default `200`. Set to `NULL` to disable.
 
 1. The session entry points (`nacreApp` server, `renderNacre` `onFlushed`) send
    a `nacre-config` message with the timeout from `getOption("nacre.stale_timeout")`.
-2. On the client, every `sendPayload` call increments a pending-event counter
-   and starts a timer (if not already running).
-3. If `shiny:idle` fires before the timer, the counter and timer are reset.
-4. If the timer fires first, `nacre-stale` is added to `<body>`, which
+2. On the client, every `sendPayload` call starts a show timer (if not already
+   running). It also cancels any pending clear, keeping the indicator up if a
+   new event fires shortly after the server goes idle.
+3. If `shiny:idle` fires before the show timer, the timer is reset.
+4. If the show timer fires first, `nacre-stale` is added to `<html>`, which
    activates `filter: saturate(0) brightness(0.85)` (full grayscale + dim) and
    shows an animated progress bar at the top of the viewport, both via
    `nacre.css`. The progress bar color is customizable with the
    `--nacre-stale-color` CSS variable (defaults to Bootstrap gray).
-5. When `shiny:idle` eventually fires, the class is removed with a short
-   CSS transition.
+5. When `shiny:idle` fires, a debounced clear is scheduled (100ms). If
+   `shiny:busy` fires before the clear executes (e.g. a reactive chain
+   triggers a follow-up flush), the clear is cancelled. The indicator only
+   removes once the server is truly idle for the full debounce window.
 
 **Debug:** `nacre.debug.latency` (seconds) adds a `Sys.sleep` to every event
 handler. The `optimistic_updates` example exposes this as a slider.

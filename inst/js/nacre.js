@@ -41,6 +41,15 @@
     }
   }
 
+  // Cancel pending clear if server becomes busy again (e.g. a reactive
+  // chain triggers a follow-up flush after the initial idle).
+  $(document).on('shiny:busy', function() {
+    if (staleClearTimerId !== null) {
+      clearTimeout(staleClearTimerId);
+      staleClearTimerId = null;
+    }
+  });
+
   // Clear stale state when server finishes processing
   $(document).on('shiny:idle', function() {
     clearStale();
