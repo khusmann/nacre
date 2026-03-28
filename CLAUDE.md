@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+## Project status
+
+- Greenfield project — no backwards compatibility constraints
+
 ## Commit policy
 
 - One-line commit messages unless directed otherwise
