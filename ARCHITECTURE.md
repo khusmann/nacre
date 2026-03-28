@@ -240,7 +240,10 @@ indicator. Default `200`. Set to `NULL` to disable.
    and starts a timer (if not already running).
 3. If `shiny:idle` fires before the timer, the counter and timer are reset.
 4. If the timer fires first, `nacre-stale` is added to `<body>`, which
-   activates `filter: saturate(0.3) brightness(0.95)` via `nacre.css`.
+   activates `filter: saturate(0) brightness(0.85)` (full grayscale + dim) and
+   shows an animated progress bar at the top of the viewport, both via
+   `nacre.css`. The progress bar color is customizable with the
+   `--nacre-stale-color` CSS variable (defaults to Bootstrap gray).
 5. When `shiny:idle` eventually fires, the class is removed with a short
    CSS transition.
 
