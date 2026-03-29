@@ -6,7 +6,16 @@
 \alias{nacre-package}
 \title{nacre: Fine-Grained Reactive DOM Bindings for Shiny}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 A thin rendering layer on top of Shiny that replaces renderUI with Solid-style fine-grained DOM bindings. Pass a function instead of a value to make any tag attribute reactive.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://khusmann.github.io/nacre/}
+}
+
 }
 \author{
 \strong{Maintainer}: Kyle Husmann \email{khusmann@gmail.com}
