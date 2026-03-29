@@ -1,4 +1,4 @@
-# nacre
+# nacre <img src="man/figures/logo.png" align="right" height="139" />
 
 **An extra layer of Shiny for Shiny.**
 
