@@ -50,25 +50,35 @@ jobs:
         run: install.packages("shinylive")
         shell: Rscript {0}
 
+      - name: Build nacre CRAN repo for WebR
+        run: |
+          contrib_dir <- file.path("docs", "r-repo", "src", "contrib")
+          dir.create(contrib_dir, recursive = TRUE)
+          devtools::build(path = contrib_dir, quiet = TRUE)
+          tools::write_PACKAGES(contrib_dir, type = "source")
+        shell: Rscript {0}
+
       - name: Export shinylive apps
         run: |
+          nacre_repo <- "https://khusmann.github.io/nacre/r-repo/"
+          webr_install <- paste0(
+            'webr::install("nacre", repos = c("', nacre_repo, '", "https://repo.r-wasm.org"))\n'
+          )
           examples <- c(
-            "controlled-inputs" = "controlled_inputs",
-            "temperature"       = "temperature",
-            "todo"              = "todo",
-            "module"            = "module",
+            "controlled-inputs"  = "controlled_inputs",
+            "temperature"        = "temperature",
+            "todo"               = "todo",
+            "module"             = "module",
             "optimistic-updates" = "optimistic_updates"
           )
           for (slug in names(examples)) {
             app_dir <- file.path(tempdir(), slug)
             dir.create(app_dir)
-            file.copy(
-              file.path("examples", paste0(examples[[slug]], ".R")),
-              file.path(app_dir, "app.R")
-            )
+            app_code <- readLines(file.path("examples", paste0(examples[[slug]], ".R")))
+            writeLines(c(webr_install, app_code), file.path(app_dir, "app.R"))
             shinylive::export(
-              app_dir  = app_dir,
-              dest_dir = file.path("docs", "apps", slug)
+              appdir  = app_dir,
+              destdir = file.path("docs", "apps", slug)
             )
           }
         shell: Rscript {0}
